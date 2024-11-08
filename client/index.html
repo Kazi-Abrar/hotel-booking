@@ -1,0 +1,101 @@
+<!-- client/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        form { margin-bottom: 20px; }
+        label { display: block; margin: 10px 0 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 15px; }
+        #updates { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Hotel Booking Reservation</h1>
+    <form id="reservationForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+
+        <label for="roomType">Room Type:</label>
+        <select id="roomType" required>
+            <option value="Deluxe">Deluxe</option>
+            <option value="Standard">Standard</option>
+        </select>
+
+        <label for="checkIn">Check-In Date:</label>
+        <input type="date" id="checkIn" required>
+
+        <label for="checkOut">Check-Out Date:</label>
+        <input type="date" id="checkOut" required>
+
+        <button type="submit">Reserve Room</button>
+    </form>
+
+    <div id="updates">
+        <h2>Updates:</h2>
+        <ul id="updatesList"></ul>
+    </div>
+
+    <script>
+        // WebSocket connection
+        const ws = new WebSocket('ws://localhost:3000');
+
+        ws.onmessage = function(event) {
+            const updatesList = document.getElementById('updatesList');
+            const newUpdate = document.createElement('li');
+            newUpdate.textContent = event.data;
+            updatesList.appendChild(newUpdate);
+        };
+
+        // Handle form submission
+        document.getElementById('reservationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const roomType = document.getElementById('roomType').value;
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut').value;
+
+            // Create XML request
+            const xmlRequest = `
+                <ReservationRequest>
+                    <User>
+                        <Name>${name}</Name>
+                        <Email>${email}</Email>
+                    </User>
+                    <Room>
+                        <Type>${roomType}</Type>
+                        <CheckInDate>${checkIn}</CheckInDate>
+                        <CheckOutDate>${checkOut}</CheckOutDate>
+                    </Room>
+                </ReservationRequest>
+            `;
+
+            // Send XML request to the server
+            fetch('http://localhost:3000/reserve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/xml'
+                },
+                body: xmlRequest
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('Response from server:', data);
+                alert('Reservation request sent!');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
